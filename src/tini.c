@@ -692,7 +692,7 @@ int main(int argc, char *argv[]) {
 
             if (child_exitcode != 0) {
                 if (sleep_after_chld_exit_non_zero > 0) {
-                    PRINT_DEBUG("child process exitcode: %d, sleep %d sec", sleep_after_chld_exit_non_zero, child_exitcode);
+                    PRINT_DEBUG("child process exitcode: %d, sleep %d sec", child_exitcode, sleep_after_chld_exit_non_zero);
                     sleep(sleep_after_chld_exit_non_zero);
                 }
             }
