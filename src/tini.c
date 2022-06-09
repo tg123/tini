@@ -85,6 +85,8 @@ static const struct {
 };
 
 static unsigned int verbosity = DEFAULT_VERBOSITY;
+static unsigned int sleep_after_chld_exit_all = 0;
+static unsigned int sleep_after_chld_exit_non_zero = 0;
 
 static int32_t expect_status[(STATUS_MAX - STATUS_MIN + 1) / 32];
 
@@ -99,6 +101,8 @@ static int32_t expect_status[(STATUS_MAX - STATUS_MIN + 1) / 32];
 
 #define VERBOSITY_ENV_VAR "TINI_VERBOSITY"
 #define KILL_PROCESS_GROUP_GROUP_ENV_VAR "TINI_KILL_PROCESS_GROUP"
+#define SLEEP_SEC_ON_ERR_ENV_VAR "TINI_SLEEP_SEC_ON_ERR"
+#define SLEEP_SEC_FINALLY_ENV_VAR "TINI_SLEEP_SEC_FINALLY"
 
 #define TINI_VERSION_STRING "tini version " TINI_VERSION TINI_GIT
 
@@ -408,6 +412,16 @@ int parse_env() {
 		verbosity = atoi(env_verbosity);
 	}
 
+	char* env_sleep_on_err = getenv(SLEEP_SEC_ON_ERR_ENV_VAR);
+	if (env_sleep_on_err != NULL) {
+	    sleep_after_chld_exit_non_zero = atoi(env_sleep_on_err);
+	}
+
+	char* env_sleep_all = getenv(SLEEP_SEC_FINALLY_ENV_VAR);
+	if (env_sleep_all != NULL) {
+	   sleep_after_chld_exit_all = atoi(env_sleep_all);
+	}
+
 	return 0;
 }
 
@@ -675,6 +689,19 @@ int main(int argc, char *argv[]) {
 
 		if (child_exitcode != -1) {
 			PRINT_TRACE("Exiting: child has exited");
+
+            if (child_exitcode != 0) {
+                if (sleep_after_chld_exit_non_zero > 0) {
+                    PRINT_DEBUG("child process exitcode: %d, sleep %d sec", sleep_after_chld_exit_non_zero, child_exitcode);
+                    sleep(sleep_after_chld_exit_non_zero);
+                }
+            }
+
+            if (sleep_after_chld_exit_all) {
+                PRINT_DEBUG("sleep %d sec before exiting", sleep_after_chld_exit_all);
+                sleep(sleep_after_chld_exit_all);
+            }
+
 			return child_exitcode;
 		}
 	}
